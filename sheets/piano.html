@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bémol, planche</title>
+<style>
+  body { margin: 0; padding: 16px; background: #222; }
+  canvas { display: block; margin: auto; }
+</style>
+<canvas id="sheet" width="960" height="920"></canvas>
+<script type="module">
+  import { frame, present, rect, stamp, PALETTE } from '../pixel.js';
+  import { drawBemol, FLAT, STAR, BANG, PHONES_DOWN } from '../characters/bemol.js';
+  import { drawStreet, drawRails, drawBusStop, MOVER, PAW, BALCONY_A, BALCONY_B, GROUND } from '../sets/pixel-street.js';
+  import { drawPiano, drawRope, drawRopeCloseup } from '../props/piano.js';
+
+  const S = 3, ctx = document.getElementById('sheet').getContext('2d');
+  const at = (f, x, y) => present(ctx, f, x * S, y * S, S);
+
+  // The whole facade, two screens high, as the opening shot pans down it.
+  const world = oy => {
+    const f = frame();
+    drawStreet(f, oy);
+    for (const b of [BALCONY_A, BALCONY_B]) {
+      stamp(f, MOVER, b.x - 7, b.y - 17 - oy);
+    }
+    drawRails(f, oy);
+    for (const [b, knot] of [[BALCONY_A, 134], [BALCONY_B, 88]]) {
+      drawRope(f, b.x, b.y - 4 - oy, knot - oy);
+      stamp(f, PAW, b.x - 2, b.y - 5 - oy);
+      stamp(f, PAW, b.x - 2, b.y - 9 - oy);
+      drawPiano(f, b.x, knot - oy);
+    }
+    drawBemol(f, { head: 'happy', body: 'dance' }, BALCONY_A.x, GROUND - oy);
+    drawBusStop(f, oy);
+    return f;
+  };
+  at(world(0), 0, 0);
+  at(world(120), 0, 120);
+
+  const rope = frame();
+  drawRopeCloseup(rope, { cut: 2 });
+  at(rope, 160, 0);
+
+  // Four poses, ×6, each in a 40×40 cell.
+  const cell = (i, draw) => {
+    const f = frame('f');
+    for (let y = 0; y < 40; y += 8) rect(f, 0, y, 40, 1, 'F');
+    rect(f, 0, 34, 40, 6, 's'); rect(f, 0, 34, 40, 1, 'n');
+    draw(f);
+    const x = 480 + (i % 2) * 240, y = 360 + Math.floor(i / 2) * 240;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x, y, 240, 240); ctx.clip();
+    present(ctx, f, x, y, 6);
+    ctx.restore();
+    ctx.strokeStyle = '#1a1423'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, 238, 238);
+  };
+  cell(0, f => drawBemol(f, { head: 'idle' }, 20, 35));
+  cell(1, f => drawBemol(f, { head: 'happy', body: 'dance' }, 20, 35));
+  cell(2, f => { drawBemol(f, { head: 'alarm', body: 'alarm', phones: 'off' }, 20, 35); stamp(f, BANG, 34, 6); });
+  cell(3, f => {
+    stamp(f, FLAT, 4, 27);
+    stamp(f, PHONES_DOWN, 27, 23);
+    for (const [x, y] of [[6, 16], [18, 12], [29, 16]]) stamp(f, STAR, x, y);
+  });
+
+  ctx.font = '700 16px ui-monospace, Menlo, monospace'; ctx.fillStyle = '#ddd';
+  ctx.fillText('À gauche : la façade entière. Le plan 1 la', 12, 750);
+  ctx.fillText('descend en panoramique ; la rue = moitié basse.', 12, 772);
+  ctx.fillText('En haut à droite : la corde sur la rambarde,', 12, 804);
+  ctx.fillText('deux torons sur trois déjà coupés.', 12, 826);
+  ctx.font = '700 18px ui-monospace, Menlo, monospace'; ctx.fillStyle = '#1a1423';
+  ['idle', 'heureux', 'alarme', 'aplati'].forEach((n, i) => ctx.fillText(n, 490 + (i % 2) * 240, 382 + Math.floor(i / 2) * 240));
+
+  // The palette, one swatch per colour, with its char.
+  Object.entries(PALETTE).forEach(([ch, hex], i) => {
+    const x = 16 + i * 42, y = 856;
+    ctx.fillStyle = hex; ctx.fillRect(x, y, 36, 36);
+    ctx.fillStyle = '#ddd'; ctx.fillText(ch, x + 12, y + 56);
+  });
+</script>
+</html>
