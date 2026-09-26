@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pépin, planche</title>
+<style>
+  body { margin: 0; padding: 16px; background: #222; }
+  canvas { display: block; width: 100%; max-width: 1600px; margin: auto; }
+</style>
+<canvas id="sheet" width="3200" height="1000"></canvas>
+<script type="module">
+  import { POSES, drawPepin } from '../characters/pepin.js';
+  import { drawGarden } from '../sets/garden.js';
+
+  const W = 400, H = 500;
+  const ctx = document.getElementById('sheet').getContext('2d');
+  ctx.scale(2, 2);
+
+  Object.entries(POSES).forEach(([name, pose], i) => {
+    ctx.save();
+    ctx.translate(i * W, 0);
+    ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+    drawGarden(ctx, W, H);
+    drawPepin(ctx, pose, W / 2 - 12, 470, 1.4);
+    ctx.fillStyle = '#5a2e08'; ctx.font = '700 22px system-ui, sans-serif';
+    ctx.fillText(name, 16, 34);
+    ctx.restore();
+  });
+</script>
+</html>
