@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filou, planche</title>
+<style>
+  body { margin: 0; padding: 16px; background: #222; }
+  canvas { display: block; width: 100%; max-width: 1440px; margin: auto; }
+</style>
+<canvas id="sheet" width="2880" height="1960"></canvas>
+<script type="module">
+  import { POSES, drawFilou } from '../characters/filou.js';
+  import { drawStreet, G } from '../sets/street.js';
+  import { drawCar } from '../props/car.js';
+  import { INK, drawParts, ell, filmPrint, qb, smooth } from '../lib/anidoodle.js';
+
+  const ctx = document.getElementById('sheet').getContext('2d');
+  ctx.scale(2, 2);
+  ctx.fillStyle = '#0b0907'; ctx.fillRect(0, 0, 1440, 980);
+
+  // One panel: clip, draw, print it on film, caption it.
+  function panel(x, y, w, h, seed, draw, caption) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
+    draw(w, h);
+    filmPrint(ctx, w, h, seed);
+    ctx.fillStyle = '#f3e7cf'; ctx.font = 'italic 700 20px Georgia, serif'; ctx.textAlign = 'center';
+    ctx.fillText(caption, w / 2, h - 26);
+    ctx.restore();
+  }
+
+  function backdrop(w, h) {
+    drawParts(ctx, [
+      { fills: [{ pts: [[0, 0], [w, 0], [w, h], [0, h]], col: '#e9e4d8' }, { pts: [[0, 380], [w, 380], [w, h], [0, h]], col: '#cbc5b8' }], details: [{ pts: [[0, 380], [w, 380]], w: 2.4 }] },
+      { fills: [{ pts: ell(w / 2, 404, 80, 10, 0, 24), col: '#000000', alpha: 0.22 }] },
+    ]);
+  }
+
+  // Two music notes floating off a whistle.
+  function notes(x, y) {
+    for (const [dx, dy, s] of [[0, 0, 1], [26, -30, 0.8]]) {
+      const hx = x + dx, hy = y + dy;
+      drawParts(ctx, [{ fills: [{ pts: ell(hx, hy, 6 * s, 4.5 * s, -0.4, 14), col: INK }], details: [{ pts: [[hx + 5 * s, hy - 1], [hx + 5 * s, hy - 26 * s]], w: 2.4 }, { pts: qb([hx + 5 * s, hy - 26 * s], [hx + 14 * s, hy - 20 * s], [hx + 12 * s, hy - 10 * s], 6), w: 2.4 }] }]);
+    }
+  }
+  // His lucky coin, spinning in the air above his thumb.
+  function coin(x, y) {
+    drawParts(ctx, [
+      { outline: [ell(x, y, 10, 4, 0.3, 20)], ow: 1.8, fills: [{ pts: ell(x, y, 10, 4, 0.3, 20), col: '#e3d9c0' }] },
+      { details: [{ pts: qb([x - 16, y + 30], [x - 22, y + 8], [x - 12, y - 4], 8), w: 1.6 }, { pts: qb([x + 14, y + 26], [x + 20, y + 8], [x + 13, y - 2], 8), w: 1.6 }] },
+    ]);
+  }
+  // Take lines: short strokes bursting out around the head.
+  function takeLines(x, y) {
+    const d = [];
+    for (let i = 0; i < 9; i++) { const a = -Math.PI + (i / 8) * Math.PI, r0 = 104, r1 = 128; d.push({ pts: [[x + Math.cos(a) * r0, y + Math.sin(a) * r0 * 0.9], [x + Math.cos(a) * r1, y + Math.sin(a) * r1 * 0.9]], w: 3 }); }
+    drawParts(ctx, [{ details: d }]);
+  }
+
+  const expressions = [
+    ['neutral', 'neutre', null],
+    ['happy', 'insouciant', (x, y) => { notes(x + 40, y - 180); coin(x - 55, y - 208); }],
+    ['alarm', 'alarme', (x, y) => takeLines(x, y - 262)],
+    ['dizzy', 'sonné', null],
+  ];
+  expressions.forEach(([name, caption, extra], i) => {
+    panel(i * 360, 0, 360, 480, 0, (w, h) => {
+      backdrop(w, h);
+      drawFilou(ctx, POSES[name], w / 2, 400, 1.1, { t: 0.3 });
+      extra?.(w / 2, 400);
+    }, caption);
+  });
+
+  // The street as the episode frames it: Filou in the road, the jalopy far off at the vanishing end.
+  panel(0, 490, 640, 480, 1, () => {
+    drawStreet(ctx);
+    const far = G(-40, 9);
+    drawCar(ctx, far[0], far[1], 1 / 9 * 1.1);
+    const at = G(150, 1.25);
+    drawFilou(ctx, POSES.happy, at[0], at[1], 0.95 / 1.25 * 1.2);
+    notes(at[0] + 36, at[1] - 230);
+  }, 'la rue');
+
+  // The jalopy, close.
+  panel(650, 490, 790, 480, 2, (w, h) => {
+    drawStreet(ctx);
+    ctx.fillStyle = 'rgba(233,228,216,0.55)'; ctx.fillRect(0, 0, w, h);
+    drawCar(ctx, 395, 420, 1.55, { gaze: [0.2, 0.4] });
+  }, 'le tacot');
+</script>
+</html>
