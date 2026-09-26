@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Télémarmelade</title>
+<style>
+  :root { --ink: #fdf4e6; --panel: rgba(22, 16, 12, 0.72); --accent: #ffd27a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: #16100d; color: var(--ink); font-family: system-ui, sans-serif; overflow: hidden; }
+
+  .stage { position: fixed; inset: 0; overflow: hidden; }
+  /* The room lives in its own 1600×1000 space; the page moves and scales that space. */
+  .world {
+    position: absolute; left: 0; top: 0; width: 1600px; height: 1000px; transform-origin: 0 0;
+    opacity: 0; transition: opacity 0.6s;
+  }
+  .world.ready { opacity: 1; }
+  .world.zooming { transition: opacity 0.6s, transform 3s cubic-bezier(0.65, 0, 0.3, 1); }
+  /* Changing style: the camera slides to the new room's TV while the rooms crossfade. */
+  .world.reframe { transition: transform 0.9s cubic-bezier(0.45, 0, 0.2, 1); }
+  .world.reframe .screen, .world.reframe .knob { transition: left 0.9s, top 0.9s, width 0.9s, height 0.9s; }
+  .world canvas { position: absolute; }
+  .layer { position: absolute; inset: 0; opacity: 0; transition: opacity 0.9s; }
+  .layer.front { opacity: 1; }
+  .layer .close { opacity: 0; transition: opacity 0.5s; }
+  /* Round copies of the drawn knobs, which turn when used. */
+  .layer .turn { opacity: 0; border-radius: 50%; transition: opacity 0.5s, transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1); }
+  .layer.sharp .close, .layer.sharp .turn { opacity: 1; }
+  .turn.channel { transform: rotate(var(--channel, 0deg)); }
+  .turn.power { transform: rotate(var(--power, 0deg)); }
+
+  /* Cut to the exact shape of the room's glass (clip-path set by home.js). */
+  .screen { position: absolute; overflow: hidden; cursor: pointer; }
+  .screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  /* The room's own glass laid over the picture: its dark parts vanish in 'screen' mode, its glints and
+     texture (paper glint, woodblock sheen, crayon strokes) stay, so the picture takes the room's style. */
+  .screen .glass { mix-blend-mode: screen; filter: contrast(2.2) brightness(0.8); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .on .screen .glass { opacity: 1; }
+  .screen .glass[hidden] { display: none; }
+  /* Cathode look over the picture, only while it plays: scanlines, dark edges, the curved glass. */
+  .screen::before, .screen::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+  .on .screen::before, .on .screen::after { opacity: 1; }
+  .screen::before { background: repeating-linear-gradient(rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px); background-size: 100% 0.5px; }
+  .screen::after {
+    background:
+      radial-gradient(ellipse 60% 40% at 28% 18%, rgba(255, 255, 255, 0.13), transparent 70%),
+      radial-gradient(ellipse at center, transparent 58%, rgba(0, 0, 0, 0.5) 100%);
+  }
+  .knob { position: absolute; border: 0; padding: 0; background: transparent; cursor: pointer; border-radius: 50%; }
+  .knob:focus-visible, .screen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .styles {
+    position: fixed; top: 16px; left: 16px; display: flex; gap: 2px; padding: 4px; border-radius: 999px;
+    background: var(--panel); backdrop-filter: blur(6px); z-index: 2;
+  }
+  .styles button {
+    border: 0; border-radius: 999px; padding: 8px 14px; font: 600 13px system-ui, sans-serif;
+    color: var(--ink); background: transparent; cursor: pointer;
+  }
+  .styles button[aria-pressed='true'] { background: var(--ink); color: #2a1d14; }
+  .styles button:focus-visible { outline: 2px solid var(--accent); }
+
+  .hint {
+    position: fixed; left: 50%; bottom: 20px; translate: -50% 0; margin: 0; padding: 8px 14px; border-radius: 999px;
+    font-size: 14px; background: var(--panel); opacity: 0; transition: opacity 0.6s; z-index: 2; white-space: nowrap;
+  }
+  .hint.show { opacity: 1; }
+  kbd { font: inherit; padding: 0 5px; border: 1px solid rgba(253, 244, 230, 0.4); border-radius: 4px; }
+
+  @media (prefers-reduced-motion: reduce) { .world.reframe, .turn { transition: none; } }
+  @media (max-width: 600px) {
+    .styles button { padding: 7px 10px; font-size: 12px; }
+    .hint { font-size: 12px; white-space: normal; width: calc(100% - 32px); text-align: center; border-radius: 14px; }
+  }
+</style>
+
+<div class="stage">
+  <div class="world" id="world">
+    <div class="layer"><canvas class="wide"></canvas><canvas class="close"></canvas><canvas class="turn channel"></canvas><canvas class="turn power"></canvas></div>
+    <div class="layer"><canvas class="wide"></canvas><canvas class="close"></canvas><canvas class="turn channel"></canvas><canvas class="turn power"></canvas></div>
+    <div class="screen" id="screen" role="button" tabindex="0" aria-label="Allumer le téléviseur">
+      <canvas id="tv" width="1280" height="960"></canvas>
+      <canvas class="glass" id="glass"></canvas>
+    </div>
+    <button class="knob" id="channel" aria-label="Chaîne suivante"></button>
+    <button class="knob" id="power" aria-label="Allumer le téléviseur"></button>
+  </div>
+</div>
+
+<nav class="styles" aria-label="Style du salon">
+  <button data-room="ukiyoe">Estampe</button>
+  <button data-room="toytheater">Théâtre de papier</button>
+  <button data-room="crayon">Crayon</button>
+</nav>
+<p class="hint" id="hint">Clique sur l'écran pour allumer · <kbd>←</kbd> <kbd>→</kbd> pour changer de chaîne</p>
+
+<script type="module" src="./home.js"></script>
+</html>
