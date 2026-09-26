@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salon, gros plan sur le téléviseur</title>
+<style>
+  body { margin: 0; background: #1a120e; color: #eee; font: 14px system-ui, sans-serif; }
+  canvas { display: block; width: 100%; max-width: 1600px; margin: auto; }
+</style>
+<canvas id="room"></canvas>
+<p id="log"></p>
+<script type="module">
+  // Renders only the TV region (x 560–1040, y 200–560) at Z device pixels per logical unit, as the zoom does.
+  import { drawRoom } from './toytheater.js';
+  const Z = +new URLSearchParams(location.search).get('z') || 6;
+  const X = 560, Y = 200, W = 480, H = 360;
+  const canvas = document.getElementById('room');
+  canvas.width = W * Z; canvas.height = H * Z;
+  const ctx = canvas.getContext('2d');
+  const t0 = performance.now();
+  ctx.setTransform(Z, 0, 0, Z, -X * Z, -Y * Z);
+  drawRoom(ctx);
+  ctx.getImageData(0, 0, 1, 1); // wait for the raster to finish, not just the command queue
+  const ms = performance.now() - t0;
+  console.log(`drawRoom at Z=${Z}: ${ms.toFixed(0)} ms`);
+  document.getElementById('log').textContent = `Z=${Z}, ${canvas.width}×${canvas.height}: ${ms.toFixed(0)} ms`;
+  document.title = `${ms.toFixed(0)} ms`;
+</script>
+</html>

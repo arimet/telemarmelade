@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Télémarmelade, le salon (ukiyo-e)</title>
+<style>
+  body { margin: 0; background: #1a1714; }
+  canvas { display: block; width: 100%; max-width: 1600px; margin: auto; }
+</style>
+<canvas id="room" width="3200" height="2000"></canvas>
+<script type="module">
+  import { drawRoom } from './ukiyoe.js';
+  const ctx = document.getElementById('room').getContext('2d');
+  ctx.scale(2, 2);
+  drawRoom(ctx);
+</script>
+</html>

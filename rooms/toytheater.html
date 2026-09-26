@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salon, théâtre de papier</title>
+<style>
+  body { margin: 0; background: #1a120e; }
+  canvas { display: block; width: 100%; max-width: 1600px; margin: auto; }
+</style>
+<canvas id="room" width="3200" height="2000"></canvas>
+<script type="module">
+  import { drawRoom } from './toytheater.js';
+  drawRoom(document.getElementById('room').getContext('2d'), 3200, 2000);
+</script>
+</html>

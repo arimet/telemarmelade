@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Télémarmelade, gros plan au crayon</title>
+<style>
+  body { margin: 0; padding: 0 20px; background: #2a2622; }
+  canvas { display: block; width: 960px; max-width: 100%; margin: auto; }
+</style>
+<!-- The TV region (logical x 560–1040, y 200–560) at Z device px per logical px; ?z= overrides 6. -->
+<canvas id="close"></canvas>
+<script type="module">
+  import { drawRoom } from './crayon.js';
+  const Z = +new URLSearchParams(location.search).get('z') || 6, X = 560, Y = 200, W = 480, H = 360;
+  const canvas = document.getElementById('close');
+  canvas.width = W * Z; canvas.height = H * Z;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(Z, 0, 0, Z, -X * Z, -Y * Z);
+  const t0 = performance.now();
+  drawRoom(ctx);
+  console.log(`crayon close-up at Z = ${Z}: ${Math.round(performance.now() - t0)} ms`);
+</script>
+</html>

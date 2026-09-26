@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Télémarmelade, le salon (ukiyo-e), gros plan</title>
+<style>
+  body { margin: 0; background: #1a1714; color: #eee; font: 14px system-ui, sans-serif; }
+  canvas { display: block; width: 1200px; max-width: 100%; margin: auto; }
+  p { text-align: center; }
+</style>
+<!-- The TV close-up the home page zooms into: logical region x 560–1040, y 200–560 at Z device px per unit (?z=6). -->
+<canvas id="room"></canvas>
+<p id="log"></p>
+<script type="module">
+  import { drawRoom, TV_SCREEN } from './ukiyoe.js';
+  const Z = +new URLSearchParams(location.search).get('z') || 6;
+  const X0 = 560, Y0 = 200, W = 480, H = 360;
+  const canvas = document.getElementById('room');
+  canvas.width = W * Z; canvas.height = H * Z;
+  const ctx = canvas.getContext('2d');
+  const t0 = performance.now();
+  ctx.setTransform(Z, 0, 0, Z, -X0 * Z, -Y0 * Z);
+  drawRoom(ctx);
+  ctx.getImageData(0, 0, 1, 1); // wait for the drawing to be flushed, not just queued
+  const ms = Math.round(performance.now() - t0);
+  // Outline where the episode will play, to check TV_SCREEN lines up.
+  if (new URLSearchParams(location.search).has('outline')) {
+    ctx.strokeStyle = '#f0f'; ctx.lineWidth = 1 / Z;
+    ctx.strokeRect(TV_SCREEN.x, TV_SCREEN.y, TV_SCREEN.w, TV_SCREEN.h);
+  }
+  const msg = `Z = ${Z}: ${canvas.width}×${canvas.height} px drawn in ${ms} ms`;
+  console.log(msg);
+  document.getElementById('log').textContent = msg;
+</script>
+</html>

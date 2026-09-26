@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Télémarmelade, salon au crayon</title>
+<style>
+  body { margin: 0; padding: 0 20px; background: #2a2622; }
+  canvas { display: block; width: 1600px; max-width: 100%; margin: auto; }
+</style>
+<canvas id="room" width="3200" height="2000"></canvas>
+<script type="module">
+  import { drawRoom } from './crayon.js';
+  const ctx = document.getElementById('room').getContext('2d');
+  ctx.scale(2, 2);
+  const t0 = performance.now();
+  drawRoom(ctx);
+  console.log(`crayon room: ${Math.round(performance.now() - t0)} ms`);
+</script>
+</html>
