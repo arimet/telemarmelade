@@ -11,6 +11,7 @@ disaster coming and the hero does not.
 | 3 | 20 s avant que le piano ne tombe | pixel art, `episodes/piano.js` |
 | 4–6 | Petits Tracas de la Forêt, by Guillaume Billey | video, `video/` |
 | 7 | Carrefour sanglant, by Julien M | video, `video/` |
+| 8–9 | La poussette folle, in 3D and as an illustration, by Julien M | video, `video/` |
 
 More videos can be added as channels: see `video/README.md`. How the coded episodes were made, and
 with which Claude Code skills: [MAKING-OF.md](MAKING-OF.md).

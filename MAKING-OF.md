@@ -83,6 +83,7 @@ a crayon drawing: `rooms/*.js`.
 
 - **Petits Tracas de la Forêt**, episodes 1 to 3, by Guillaume Billey
   ([@guilbill](https://github.com/guilbill)).
-- **Carrefour sanglant**, by Julien M ([@JulienMattiussi](https://github.com/JulienMattiussi)).
+- **Carrefour sanglant** and **La poussette folle** (in 3D and as an illustration), by Julien M
+  ([@JulienMattiussi](https://github.com/JulienMattiussi)).
 
 How they were made is theirs to tell.
